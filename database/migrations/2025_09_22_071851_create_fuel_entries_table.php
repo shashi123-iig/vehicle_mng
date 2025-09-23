@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('date');
             $table->decimal('fuel_price', 10, 2);
             $table->decimal('fuel_quantity', 10, 2);
-            $table->enum('payment_mode', ['cash', 'upi']);
+            $table->string('payment_mode')->default('cash');
             $table->integer('kilometer_reading')->nullable();
             $table->text('note')->nullable();
             $table->string('image_vehicle_no')->nullable();
@@ -34,4 +34,5 @@ return new class extends Migration
     {
         Schema::dropIfExists('fuel_entries');
     }
+
 };
