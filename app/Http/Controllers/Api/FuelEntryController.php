@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 
 class FuelEntryController extends Controller
 {
-    // Get all fuel entries with vehicle info
     public function index()
     {
         $entries = FuelEntry::with('vehicle')->get();
@@ -19,18 +18,40 @@ class FuelEntryController extends Controller
         ]);
     }
 
-    // Add new fuel entry
-    public function store(Request $request)
-    {
-        $entry = FuelEntry::create($request->all());
-        return response()->json([
-            'success' => true,
-            'message' => 'Fuel entry created successfully',
-            'data' => $entry
-        ], 201);
+public function store(Request $request)
+{
+    $data = $request->all();
+
+    if ($request->hasFile('image_vehicle_no')) {
+        $filename = time().'_vehicle.'.$request->file('image_vehicle_no')->getClientOriginalExtension();
+        $request->file('image_vehicle_no')->move(public_path('uploads/vehicle_no'), $filename);
+        $data['image_vehicle_no'] = url('uploads/vehicle_no/'.$filename);
     }
 
-    // Show single fuel entry
+    // Odometer image
+    if ($request->hasFile('image_odometer')) {
+        $filename = time().'_odometer.'.$request->file('image_odometer')->getClientOriginalExtension();
+        $request->file('image_odometer')->move(public_path('uploads/odometer'), $filename);
+        $data['image_odometer'] = url('uploads/odometer/'.$filename);
+    }
+
+    // Fuel meter image
+    if ($request->hasFile('image_fuel_meter')) {
+        $filename = time().'_fuel.'.$request->file('image_fuel_meter')->getClientOriginalExtension();
+        $request->file('image_fuel_meter')->move(public_path('uploads/fuel_meter'), $filename);
+        $data['image_fuel_meter'] = url('uploads/fuel_meter/'.$filename);
+    }
+
+    $entry = FuelEntry::create($data);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Fuel entry created successfully',
+        'data'    => $entry
+    ], 201);
+}
+
+
     public function show($id)
     {
         $entry = FuelEntry::with('vehicle')->findOrFail($id);

@@ -18,15 +18,33 @@ class VehicleController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
+public function store(Request $request)
+{
+    try {
         $vehicle = Vehicle::create($request->all());
+
         return response()->json([
             'success' => true,
             'message' => 'Vehicle created successfully',
             'data' => $vehicle
         ], 201);
+
+    } catch (\Exception $e) {
+        if ($e->getCode() == 23000) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vehicle number already exists',
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong',
+        ]);
     }
+}
+
+
 
     public function show($id)
     {
