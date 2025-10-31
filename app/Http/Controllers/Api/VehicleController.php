@@ -4,78 +4,66 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
+use App\Models\VehicleAssignment;
 use Illuminate\Http\Request;
 
 class VehicleController extends Controller
 {
-     public function index()
+     // Admin: add new vehicle
+    public function store(Request $request)
     {
-        $vehicles = Vehicle::all();
+        $validated = $request->validate([
+            'vehicle_number' => 'required|unique:vehicles',
+            'vehicle_type' => 'nullable|string',
+            'fuel_type' => 'nullable|string',
+            'capacity' => 'nullable|integer',
+        ]);
+
+        $vehicle = Vehicle::create($validated);
+
         return response()->json([
-            'success' => true,
-            'message' => 'Vehicle list fetched successfully',
-            'data' => $vehicles
+            'status' => true,
+            'message' => 'Vehicle added successfully',
+            'data' => $vehicle,
         ]);
     }
 
-public function store(Request $request)
-{
-    try {
-        $vehicle = Vehicle::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Vehicle created successfully',
-            'data' => $vehicle
-        ], 201);
-
-    } catch (\Exception $e) {
-        if ($e->getCode() == 23000) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vehicle number already exists',
-            ]);
-        }
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Something went wrong',
-        ]);
-    }
-}
-
-
-
-    public function show($id)
+    // Admin: assign driver manually
+    public function assignDriver(Request $request)
     {
-        $vehicle = Vehicle::with('fuelEntries')->findOrFail($id);
+        $validated = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'driver_name' => 'required|string',
+            'driver_mobile' => 'required|string',
+        ]);
+
+        // Deactivate any previous driver for this vehicle
+        VehicleAssignment::where('vehicle_id', $validated['vehicle_id'])
+            ->update(['active' => false]);
+
+        // Create new active assignment
+        $assignment = VehicleAssignment::create([
+            'vehicle_id' => $validated['vehicle_id'],
+            'driver_name' => $validated['driver_name'],
+            'driver_mobile' => $validated['driver_mobile'],
+            'active' => true,
+        ]);
+
         return response()->json([
-            'success' => true,
-            'message' => 'Vehicle details fetched successfully',
-            'data' => $vehicle
+            'status' => true,
+            'message' => 'Driver assigned successfully',
+            'data' => $assignment,
         ]);
     }
 
-    public function update(Request $request, $id)
+    // Admin: list all vehicles with current driver
+    public function index()
     {
-        $vehicle = Vehicle::findOrFail($id);
-        $vehicle->update($request->all());
+        $vehicles = Vehicle::with('activeAssignment')->get();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Vehicle updated successfully',
-            'data' => $vehicle
+            'status' => true,
+            'data' => $vehicles,
         ]);
     }
-
-    public function destroy($id)
-    {
-        Vehicle::destroy($id);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Vehicle deleted successfully'
-        ]);
-    }
-
 }

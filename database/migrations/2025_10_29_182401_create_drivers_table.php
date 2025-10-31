@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vehicles', function (Blueprint $table) {
+        Schema::create('drivers', function (Blueprint $table) {
             $table->id();
-            $table->string('model');
-            $table->string('number')->unique();
-            $table->string('fuel_type');
+            $table->string('name');
+            $table->string('mobile')->unique();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->foreignId('vehicle_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('vehicles');
+        Schema::dropIfExists('drivers');
     }
 };
